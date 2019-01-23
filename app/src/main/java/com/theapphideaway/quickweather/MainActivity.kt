@@ -33,16 +33,19 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
         setSupportActionBar(toolbar)
 
-        var searchText = url_search_edit_text.text.toString()
-
         url_search_edit_text.setOnKeyListener(View.OnKeyListener { v, keyCode, event ->
             if (keyCode == KeyEvent.KEYCODE_ENTER && event.action == KeyEvent.ACTION_UP) {
+                var searchText = url_search_edit_text.text.toString()
+
+                progressBar.visibility = View.VISIBLE
 
                 Url = "https://api.openweathermap.org/data/2.5/weather?q=$searchText&units=imperial&appid=c6afdab60aa89481e297e0a4f19af055"
 
                 //Temp isnt changing. Make sure ime options are enabled, check url, and make sure the data is being sent
 
                 var newTemp =  weather.fetchJSONOkHttp(Url)
+
+                println("new temp on main activity =" + newTemp.CurrentTemp)
 
                 temperature_text_view.text = newTemp.CurrentTemp + "℉"
                 return@OnKeyListener true
@@ -52,10 +55,10 @@ class MainActivity : AppCompatActivity() {
         })
 
         var newTemp =  weather.fetchJSONOkHttp(Url)
-
-
-
-        temperature_text_view.text = newTemp.CurrentTemp + "℉"
+//
+//
+//
+       temperature_text_view.text = newTemp.CurrentTemp + "℉"
     }
 
 
