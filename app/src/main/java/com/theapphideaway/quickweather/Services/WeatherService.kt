@@ -1,25 +1,23 @@
 package com.theapphideaway.quickweather.Services
 
-import com.theapphideaway.quickweather.MainActivity
-import com.theapphideaway.quickweather.Model.Temperatures
-import kotlinx.android.synthetic.main.content_main.*
+import com.theapphideaway.quickweather.Model.LocationDetails
 import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.json.JSONObject
 import java.io.IOException
-import java.util.*
 
 class WeatherService {
 
-    var temperatures = Temperatures()
+    var locationDetails = LocationDetails()
     var main:JSONObject? = null
     var currentTemp: Int? = null
     var tempMin: Int? = null
     var tempMax: Int? = null
+    var city: String? = null
 
-    fun fetchJSONOkHttp(Url: String): Temperatures{
+    fun fetchJSONOkHttp(Url: String): LocationDetails{
         println("Attempting to fetch JSON")
         val request = Request.Builder()
             .url(Url).build()
@@ -38,21 +36,23 @@ class WeatherService {
                 println(body)
 
                 var reader = JSONObject(body)
-                temperatures = Temperatures()
+                locationDetails = LocationDetails()
                 count = 0
 
-                println(temperatures.CurrentTemp)
+                println(locationDetails.CurrentTemp)
 
                 main = reader.getJSONObject("main")
                 currentTemp = main!!.getInt("temp")
                 tempMin = main!!.getInt("temp_min")
                 tempMax = main!!.getInt("temp_max")
+                city = reader.getString("name")
 
-                temperatures.CurrentTemp = currentTemp.toString()
-                temperatures.HighTemp = tempMax.toString()
-                temperatures.LowTemp = tempMin.toString()
+                locationDetails.CurrentTemp = currentTemp
+                locationDetails.HighTemp = tempMax
+                locationDetails.LowTemp = tempMin
+                locationDetails.City = city
 
-                println("New Temp = " + temperatures.CurrentTemp)
+                println("New Temp = " + locationDetails.CurrentTemp)
 
                 count = 1
             }
@@ -62,14 +62,14 @@ class WeatherService {
             Thread.sleep(100)
         }
 
-        if (temperatures.CurrentTemp != null)
+        if (locationDetails.CurrentTemp != null)
         {
-            return temperatures
+            return locationDetails
         }
         else
         {
-            temperatures.CurrentTemp = "Something went wrong"
-            return temperatures
+            locationDetails.CurrentTemp = 404
+            return locationDetails
         }
 
     }
