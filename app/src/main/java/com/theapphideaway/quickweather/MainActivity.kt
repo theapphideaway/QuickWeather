@@ -40,6 +40,7 @@ class MainActivity : AppCompatActivity() {
 
     var weather = WeatherService()
     var url :String? = null
+    var forcastUrl :String? = null
 
     var TAG: String = "MainActivity"
     var FINE_LOCATION_REQUEST: Int = 888
@@ -62,11 +63,11 @@ class MainActivity : AppCompatActivity() {
             if (keyCode == KeyEvent.KEYCODE_ENTER && event.action == KeyEvent.ACTION_UP) {
                 var searchText = url_search_edit_text.text.toString()
 
-                GetCurrentDetails(null, searchText)
+                getCurrentDetails(null, searchText)
 
                 //Temp isnt changing. Make sure ime options are enabled, check url, and make sure the data is being sent
 
-                var details =  weather.fetchJSONOkHttp(url!!)
+                var details =  weather.getCurrentWeather(url!!)
 
                 city_text_view.text = details.City
                 temperature_text_view.text = details.CurrentTemp.toString() + "℉"
@@ -84,6 +85,8 @@ class MainActivity : AppCompatActivity() {
 
 
     }
+
+
     @SuppressLint("MissingPermission")
     //Start Location update as define intervals
     fun initLocationUpdate(){
@@ -104,7 +107,7 @@ class MainActivity : AppCompatActivity() {
             override fun onLocationResult(locationResult: LocationResult?) {
 
                 if (locationResult != null) {
-                    GetCurrentDetails(locationResult.lastLocation, null)
+                    getCurrentDetails(locationResult.lastLocation, null)
                 }
             }
 
@@ -117,23 +120,37 @@ class MainActivity : AppCompatActivity() {
 
     }
 
-    fun GetCurrentDetails(location: Location?, city:String?){
+    fun getCurrentDetails(location: Location?, city:String?){
 
         if(location != null){
             var lat = location!!.latitude
             var long = location!!.longitude
             url = "https://api.openweathermap.org/data/2.5/weather?lat=$lat&lon=$long&units=imperial&appid=c6afdab60aa89481e297e0a4f19af055"
+            forcastUrl = "https://api.openweathermap.org/data/2.5/forecast/daily?lat=$lat&lon=$long&cnt=15&units=imperial&appid=c6afdab60aa89481e297e0a4f19af055"
 
         } else if(city != null){
             url = "https://api.openweathermap.org/data/2.5/weather?q=$city&units=imperial&appid=c6afdab60aa89481e297e0a4f19af055"
+            forcastUrl = "https://api.openweathermap.org/data/2.5/forecast/daily?q=$city&cnt=15&units=imperial&appid=c6afdab60aa89481e297e0a4f19af055"
         }
-        var geoTemp = weather.fetchJSONOkHttp(url!!)
+        var geoTemp = weather.getCurrentWeather(url!!)
+        var geoForcast = weather.getForcast(forcastUrl!!)
 
         city_text_view.text = geoTemp.City
         temperature_text_view.text = geoTemp.CurrentTemp.toString() + "℉"
         hi_text_view.text = "HI " + geoTemp.HighTemp.toString() + "℉"
         low_text_view.text = "LO " + geoTemp.LowTemp.toString() + "℉"
+
+
+
+        //TODO add forcast textviews here:
+
+
     }
+
+
+
+
+
 
     private fun checkPermissions(): Boolean {
         if (ContextCompat.checkSelfPermission(this,
