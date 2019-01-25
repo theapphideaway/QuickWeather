@@ -116,9 +116,12 @@ class WeatherService {
                 (0..(myList.length()-1)).forEach { i ->
                     var item = myList.getJSONObject(i)
                     var day= item.getInt("dt").toLong()
-                    val sdf = java.text.SimpleDateFormat("EEEE")
+                    var sdf = java.text.SimpleDateFormat("EEEE")
                     var dateFormat = Date(day * 1000)
                     forcast.Day = sdf.format(dateFormat)
+
+                    var sdfDate = java.text.SimpleDateFormat("MMM dd")
+                    forcast.Date = sdfDate.format((dateFormat))
 
                     var temp = item.getJSONObject("temp")
                     forcast.Temp = temp.getInt("day")

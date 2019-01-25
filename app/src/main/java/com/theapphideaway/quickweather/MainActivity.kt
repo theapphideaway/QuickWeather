@@ -20,6 +20,7 @@ import android.view.MenuItem
 import android.view.View
 import com.google.android.gms.location.*
 import com.theapphideaway.quickweather.Model.LocationDetails
+import com.theapphideaway.quickweather.Services.WeatherAdapter
 import com.theapphideaway.quickweather.Services.WeatherService
 
 import kotlinx.android.synthetic.main.activity_main.*
@@ -54,7 +55,6 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
         setSupportActionBar(toolbar)
 
-
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
 
         locationManager = getSystemService(LOCATION_SERVICE) as LocationManager?
@@ -84,7 +84,12 @@ class MainActivity : AppCompatActivity() {
         }
 
 
+
+
     }
+
+
+    //TODO Create a geolocation service and add these methods in there.
 
 
     @SuppressLint("MissingPermission")
@@ -142,6 +147,7 @@ class MainActivity : AppCompatActivity() {
 
 
 
+        grid_view_main.adapter = WeatherAdapter(this, geoForcast)
         //TODO add forcast textviews here:
 
 

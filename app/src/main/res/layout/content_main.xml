@@ -7,7 +7,7 @@
         android:layout_height="match_parent"
         app:layout_behavior="@string/appbar_scrolling_view_behavior"
         tools:showIn="@layout/activity_main"
-        tools:context=".MainActivity">
+        tools:context=".MainActivity" android:id="@+id/grid_view">
 
     <TextView
 
@@ -41,5 +41,26 @@
             android:id="@+id/low_text_view" android:layout_marginTop="8dp"
             app:layout_constraintTop_toBottomOf="@+id/hi_text_view" app:layout_constraintEnd_toEndOf="parent"
             android:layout_marginEnd="28dp"/>
+    <GridView
+            android:layout_width="match_parent"
+            android:layout_height="350dp"
+            android:numColumns="3"
+            android:verticalSpacing="15dp"
+            android:horizontalSpacing="5dp"
+            android:listSelector="@android:color/transparent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/low_text_view" android:id="@+id/grid_view_main"
+            app:layout_constraintHorizontal_bias="0.0"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintVertical_bias="0.949" android:gravity="center"/>
+    <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" app:srcCompat="@drawable/cloudy2"
+            android:id="@+id/imageView2" android:layout_marginBottom="8dp"
+            app:layout_constraintBottom_toTopOf="@+id/grid_view_main" android:layout_marginTop="8dp"
+            app:layout_constraintTop_toBottomOf="@+id/city_text_view" app:layout_constraintStart_toStartOf="parent"
+            android:layout_marginStart="8dp" app:layout_constraintEnd_toStartOf="@+id/temperature_text_view"
+            android:layout_marginEnd="8dp"/>
 
 </android.support.constraint.ConstraintLayout>
