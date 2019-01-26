@@ -25,15 +25,9 @@ import com.theapphideaway.quickweather.Services.WeatherService
 
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.content_main.*
-import okhttp3.Call
-import okhttp3.Callback
-import okhttp3.OkHttpClient
-import okhttp3.Request
-import org.json.JSONObject
-import pub.devrel.easypermissions.AfterPermissionGranted
-import pub.devrel.easypermissions.EasyPermissions
-import java.io.IOException
-import kotlin.system.measureTimeMillis
+import android.app.ProgressDialog
+
+
 
 const val REQUEST_LOCATION_PERMISSION = 1
 
@@ -46,6 +40,7 @@ class MainActivity : AppCompatActivity() {
     var TAG: String = "MainActivity"
     var FINE_LOCATION_REQUEST: Int = 888
 
+
     lateinit var locationRequest: LocationRequest
     private var locationManager : LocationManager? = null
     var fusedLocationClient: FusedLocationProviderClient? = null
@@ -54,6 +49,11 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         setSupportActionBar(toolbar)
+
+        val mDialog = ProgressDialog(this)
+        mDialog.setMessage("Please wait...")
+        mDialog.setCancelable(false)
+        mDialog.show()
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
 
@@ -81,10 +81,11 @@ class MainActivity : AppCompatActivity() {
 
         if(checkPermissions()) {
             initLocationUpdate()
+
         }
 
 
-
+        mDialog.dismiss()
 
     }
 
@@ -145,10 +146,25 @@ class MainActivity : AppCompatActivity() {
         hi_text_view.text = "HI " + geoTemp.HighTemp.toString() + "℉"
         low_text_view.text = "LO " + geoTemp.LowTemp.toString() + "℉"
 
+        var uri = "@drawable/fog"
+
+        if(geoForcast.forcasts!![0].Description!!.contains("rain")){
+             uri = "@drawable/shower3"
+        }
+        else uri = "@drawable/overcast"
+
+  // where myresource (without the extension) is the file
+
+        var imageResource = getResources().getIdentifier(uri, null, getPackageName());
+
+        var res = resources.getDrawable(imageResource)
+        main_weather_image.setImageDrawable(res)
+
 
 
         grid_view_main.adapter = WeatherAdapter(this, geoForcast)
         //TODO add forcast textviews here:
+
 
 
     }
