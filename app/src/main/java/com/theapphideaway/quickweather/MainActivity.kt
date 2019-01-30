@@ -79,6 +79,15 @@ class MainActivity : AppCompatActivity() {
             false
         })
 
+        swipeContainer.setOnRefreshListener {
+            initLocationUpdate()
+
+            swipeContainer.isRefreshing = false
+
+        }
+
+
+
         if(checkPermissions()) {
             initLocationUpdate()
 
