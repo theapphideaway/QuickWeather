@@ -1,47 +1,41 @@
 package com.theapphideaway.quickweather
 
 import android.Manifest
-import android.annotation.SuppressLint
-import android.content.Context
 import android.content.pm.PackageManager
 import android.location.Location
-import android.location.LocationListener
 import android.location.LocationManager
 import android.os.Bundle
-import android.os.Looper
-import android.support.design.widget.Snackbar
 import android.support.v4.app.ActivityCompat
 import android.support.v4.content.ContextCompat
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log
 import android.view.KeyEvent
-import android.view.Menu
-import android.view.MenuItem
 import android.view.View
-import com.google.android.gms.location.*
-import com.theapphideaway.quickweather.Model.LocationDetails
-import com.theapphideaway.quickweather.Services.WeatherAdapter
 import com.theapphideaway.quickweather.Services.WeatherService
 
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.content_main.*
 import android.app.ProgressDialog
+import com.google.android.gms.location.*
+import com.theapphideaway.quickweather.Services.LocationService
+import com.theapphideaway.quickweather.Services.WeatherClass
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 
 
-
-const val REQUEST_LOCATION_PERMISSION = 1
 
 class MainActivity : AppCompatActivity() {
 
     var weather = WeatherService()
+    val weatherClass = WeatherClass()
+    val locationService = LocationService(this)
     var url :String? = null
-    var forcastUrl :String? = null
 
     var TAG: String = "MainActivity"
     var FINE_LOCATION_REQUEST: Int = 888
 
 
-    lateinit var locationRequest: LocationRequest
     private var locationManager : LocationManager? = null
     var fusedLocationClient: FusedLocationProviderClient? = null
 
@@ -80,124 +74,95 @@ class MainActivity : AppCompatActivity() {
         })
 
         swipeContainer.setOnRefreshListener {
-            initLocationUpdate()
+            locationService.initLocationUpdate()
 
             swipeContainer.isRefreshing = false
-
         }
 
-
-
-        if(checkPermissions()) {
-            initLocationUpdate()
-
+        if(locationService.checkPermissions()) {
+            locationService.initLocationUpdate()
         }
-
 
         mDialog.dismiss()
 
     }
 
 
-    //TODO Create a geolocation service and add these methods in there.
 
-
-    @SuppressLint("MissingPermission")
-    //Start Location update as define intervals
-    fun initLocationUpdate(){
-
-        locationRequest = LocationRequest()
-        locationRequest.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
-
-        val locationSettingBuilder: LocationSettingsRequest.Builder = LocationSettingsRequest.Builder()
-        locationSettingBuilder.addLocationRequest(locationRequest)
-        val locationSetting: LocationSettingsRequest = locationSettingBuilder.build()
-
-        val settingsClient: SettingsClient = LocationServices.getSettingsClient(this)
-        settingsClient.checkLocationSettings(locationSetting)
-
-        val fusedLocationProviderClient: FusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this)
-
-        fusedLocationProviderClient.requestLocationUpdates(locationRequest, object : LocationCallback() {
-            override fun onLocationResult(locationResult: LocationResult?) {
-
-                if (locationResult != null) {
-                    getCurrentDetails(locationResult.lastLocation, null)
-                }
-            }
-
-            override fun onLocationAvailability(p0: LocationAvailability?) {
-                super.onLocationAvailability(p0)
-            }
-        },
-            Looper.myLooper())
-
-
-    }
 
     fun getCurrentDetails(location: Location?, city:String?){
 
-        if(location != null){
-            var lat = location!!.latitude
-            var long = location!!.longitude
-            url = "https://api.openweathermap.org/data/2.5/weather?lat=$lat&lon=$long&units=imperial&appid=c6afdab60aa89481e297e0a4f19af055"
-            forcastUrl = "https://api.openweathermap.org/data/2.5/forecast/daily?lat=$lat&lon=$long&cnt=15&units=imperial&appid=c6afdab60aa89481e297e0a4f19af055"
+        GlobalScope.launch(Dispatchers.Main) {
+            val response = weatherClass.getJSONApi().getCurrentWeather("Tampa",
+                "imperial", "c6afdab60aa89481e297e0a4f19af055").await()
+            temperature_text_view.text = response.main.temp.toInt().toString()
 
-        } else if(city != null){
-            url = "https://api.openweathermap.org/data/2.5/weather?q=$city&units=imperial&appid=c6afdab60aa89481e297e0a4f19af055"
-            forcastUrl = "https://api.openweathermap.org/data/2.5/forecast/daily?q=$city&cnt=15&units=imperial&appid=c6afdab60aa89481e297e0a4f19af055"
+            city_text_view.text = response.name.toString()
+            hi_text_view.text = "HI " + response.main.temp_max.toInt().toString() + "℉"
+            low_text_view.text = "LO " + response.main.temp_min.toInt().toString() + "℉"
+            var uri = "@drawable/fog"
+
+            if(response.weather[0].description.contains("rain")){
+                uri = "@drawable/shower3"
+            }
+            else if(response.weather[0].description.contains("clear")){
+                uri = "@drawable/sunny"
+            }
+            else if(response.weather[0].description.contains("snow")){
+                uri = "@drawable/snow5"
+            }
+            else if(response.weather[0].description.contains("cloud")){
+                uri = "@drawable/cloudy2"
+            }
+
+            var imageResource = getResources().getIdentifier(uri, null, getPackageName());
+
+            var res = resources.getDrawable(imageResource)
+            main_weather_image.setImageDrawable(res)
+
+
+            println(response)
         }
-        var geoTemp = weather.getCurrentWeather(url!!)
-        var geoForcast = weather.getForcast(forcastUrl!!)
 
-        city_text_view.text = geoTemp.City
-        temperature_text_view.text = geoTemp.CurrentTemp.toString() + "℉"
-        hi_text_view.text = "HI " + geoTemp.HighTemp.toString() + "℉"
-        low_text_view.text = "LO " + geoTemp.LowTemp.toString() + "℉"
-
-        var uri = "@drawable/fog"
-
-        if(geoForcast.forcasts!![0].Description!!.contains("rain")){
-             uri = "@drawable/shower3"
-        }
-        else uri = "@drawable/overcast"
-
-  // where myresource (without the extension) is the file
-
-        var imageResource = getResources().getIdentifier(uri, null, getPackageName());
-
-        var res = resources.getDrawable(imageResource)
-        main_weather_image.setImageDrawable(res)
-
-
-
-        grid_view_main.adapter = WeatherAdapter(this, geoForcast)
-        //TODO add forcast textviews here:
-
-
+//        if(location != null){
+//            var lat = location!!.latitude
+//            var long = location!!.longitude
+//            url = "https://api.openweathermap.org/data/2.5/weather?lat=$lat&lon=$long&units=imperial&appid=c6afdab60aa89481e297e0a4f19af055"
+//            forcastUrl = "https://api.openweathermap.org/data/2.5/forecast/daily?lat=$lat&lon=$long&cnt=15&units=imperial&appid=c6afdab60aa89481e297e0a4f19af055"
+//
+//        } else if(city != null){
+//            url = "https://api.openweathermap.org/data/2.5/weather?q=$city&units=imperial&appid=c6afdab60aa89481e297e0a4f19af055"
+//            forcastUrl = "https://api.openweathermap.org/data/2.5/forecast/daily?q=$city&cnt=15&units=imperial&appid=c6afdab60aa89481e297e0a4f19af055"
+//        }
+//        var geoTemp = weather.getCurrentWeather(url!!)
+//        var geoForcast = weather.getForcast(forcastUrl!!)
+//
+//        city_text_view.text = geoTemp.City
+//        temperature_text_view.text = geoTemp.CurrentTemp.toString() + "℉"
+//        hi_text_view.text = "HI " + geoTemp.HighTemp.toString() + "℉"
+//        low_text_view.text = "LO " + geoTemp.LowTemp.toString() + "℉"
+//
+//        var uri = "@drawable/fog"
+//
+//        if(geoForcast.forcasts!![0].Description!!.contains("rain")){
+//             uri = "@drawable/shower3"
+//        }
+//        else uri = "@drawable/overcast"
+//
+//  // where myresource (without the extension) is the file
+//
+//        var imageResource = getResources().getIdentifier(uri, null, getPackageName());
+//
+//        var res = resources.getDrawable(imageResource)
+//        main_weather_image.setImageDrawable(res)
+//
+//
+//
+//        grid_view_main.adapter = WeatherAdapter(this, geoForcast)
 
     }
 
 
-
-
-
-
-    private fun checkPermissions(): Boolean {
-        if (ContextCompat.checkSelfPermission(this,
-                Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-            return true
-        } else {
-            requestPermissions()
-            return false
-        }
-    }
-
-    private fun requestPermissions() {
-        ActivityCompat.requestPermissions(this,
-            arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
-            FINE_LOCATION_REQUEST)
-    }
 
     override fun onRequestPermissionsResult(requestCode: Int,
                                             permissions: Array<out String>, grantResults: IntArray) {
@@ -209,7 +174,7 @@ class MainActivity : AppCompatActivity() {
             if (grantResults.size == 1 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 // Camera permission has been granted, preview can be displayed
                 Log.i(TAG, "Location permission has now been granted. Now call initLocationUpdate")
-                initLocationUpdate()
+                locationService.initLocationUpdate()
             } else {
 
 
