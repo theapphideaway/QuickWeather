@@ -11,14 +11,12 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log
 import android.view.KeyEvent
 import android.view.View
-import com.theapphideaway.quickweather.Services.WeatherService
 
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.content_main.*
 import android.app.ProgressDialog
 import com.google.android.gms.location.*
-import com.theapphideaway.quickweather.Services.LocationService
-import com.theapphideaway.quickweather.Services.WeatherClass
+import com.theapphideaway.quickweather.Services.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -29,6 +27,7 @@ class MainActivity : AppCompatActivity() {
 
     var weather = WeatherService()
     val weatherClass = WeatherClass()
+    val forcastService = ForcastService()
     val locationService = LocationService(this)
     var url :String? = null
 
@@ -59,14 +58,6 @@ class MainActivity : AppCompatActivity() {
 
                 getCurrentDetails(null, searchText)
 
-                //Temp isnt changing. Make sure ime options are enabled, check url, and make sure the data is being sent
-
-                var details =  weather.getCurrentWeather(url!!)
-
-                city_text_view.text = details.City
-                temperature_text_view.text = details.CurrentTemp.toString() + "℉"
-                hi_text_view.text = "HI " + details.HighTemp.toString() + "℉"
-                low_text_view.text = "LO " + details.LowTemp.toString() + "℉"
                 return@OnKeyListener true
 
             }
@@ -82,87 +73,57 @@ class MainActivity : AppCompatActivity() {
         if(locationService.checkPermissions()) {
             locationService.initLocationUpdate()
         }
-
         mDialog.dismiss()
-
     }
-
-
-
 
     fun getCurrentDetails(location: Location?, city:String?){
 
-        GlobalScope.launch(Dispatchers.Main) {
-            val response = weatherClass.getJSONApi().getCurrentWeather("Tampa",
-                "imperial", "c6afdab60aa89481e297e0a4f19af055").await()
-            temperature_text_view.text = response.main.temp.toInt().toString()
+        if(city != null) {
 
-            city_text_view.text = response.name.toString()
-            hi_text_view.text = "HI " + response.main.temp_max.toInt().toString() + "℉"
-            low_text_view.text = "LO " + response.main.temp_min.toInt().toString() + "℉"
-            var uri = "@drawable/fog"
 
-            if(response.weather[0].description.contains("rain")){
-                uri = "@drawable/shower3"
+            GlobalScope.launch(Dispatchers.Main) {
+                val response = weatherClass.getJSONApi().getCurrentWeather(
+                    city!!,
+                    "imperial", "c6afdab60aa89481e297e0a4f19af055"
+                ).await()
+                temperature_text_view.text = response.main.temp.toInt().toString()
+
+                city_text_view.text = response.name.toString()
+                hi_text_view.text = "HI " + response.main.temp_max.toInt().toString() + "℉"
+                low_text_view.text = "LO " + response.main.temp_min.toInt().toString() + "℉"
+                var uri = "@drawable/fog"
+
+                if (response.weather[0].description.contains("rain")) {
+                    uri = "@drawable/shower3"
+                } else if (response.weather[0].description.contains("clear")) {
+                    uri = "@drawable/sunny"
+                } else if (response.weather[0].description.contains("snow")) {
+                    uri = "@drawable/snow5"
+                } else if (response.weather[0].description.contains("cloud")) {
+                    uri = "@drawable/cloudy2"
+                }
+
+                var imageResource = getResources().getIdentifier(uri, null, getPackageName());
+
+                var res = resources.getDrawable(imageResource)
+                main_weather_image.setImageDrawable(res)
+
+
+                println(response)
+
+
+                val forcastRespose = forcastService.getJSONApi().getForcast(
+                    city,
+                    15, "imperial", "c6afdab60aa89481e297e0a4f19af055"
+                ).await()
+
+                println(forcastRespose)
+                grid_view_main.adapter = WeatherAdapter(this@MainActivity, forcastRespose)
             }
-            else if(response.weather[0].description.contains("clear")){
-                uri = "@drawable/sunny"
-            }
-            else if(response.weather[0].description.contains("snow")){
-                uri = "@drawable/snow5"
-            }
-            else if(response.weather[0].description.contains("cloud")){
-                uri = "@drawable/cloudy2"
-            }
-
-            var imageResource = getResources().getIdentifier(uri, null, getPackageName());
-
-            var res = resources.getDrawable(imageResource)
-            main_weather_image.setImageDrawable(res)
-
-
-            println(response)
         }
-
-//        if(location != null){
-//            var lat = location!!.latitude
-//            var long = location!!.longitude
-//            url = "https://api.openweathermap.org/data/2.5/weather?lat=$lat&lon=$long&units=imperial&appid=c6afdab60aa89481e297e0a4f19af055"
-//            forcastUrl = "https://api.openweathermap.org/data/2.5/forecast/daily?lat=$lat&lon=$long&cnt=15&units=imperial&appid=c6afdab60aa89481e297e0a4f19af055"
-//
-//        } else if(city != null){
-//            url = "https://api.openweathermap.org/data/2.5/weather?q=$city&units=imperial&appid=c6afdab60aa89481e297e0a4f19af055"
-//            forcastUrl = "https://api.openweathermap.org/data/2.5/forecast/daily?q=$city&cnt=15&units=imperial&appid=c6afdab60aa89481e297e0a4f19af055"
-//        }
-//        var geoTemp = weather.getCurrentWeather(url!!)
-//        var geoForcast = weather.getForcast(forcastUrl!!)
-//
-//        city_text_view.text = geoTemp.City
-//        temperature_text_view.text = geoTemp.CurrentTemp.toString() + "℉"
-//        hi_text_view.text = "HI " + geoTemp.HighTemp.toString() + "℉"
-//        low_text_view.text = "LO " + geoTemp.LowTemp.toString() + "℉"
-//
-//        var uri = "@drawable/fog"
-//
-//        if(geoForcast.forcasts!![0].Description!!.contains("rain")){
-//             uri = "@drawable/shower3"
-//        }
-//        else uri = "@drawable/overcast"
-//
-//  // where myresource (without the extension) is the file
-//
-//        var imageResource = getResources().getIdentifier(uri, null, getPackageName());
-//
-//        var res = resources.getDrawable(imageResource)
-//        main_weather_image.setImageDrawable(res)
-//
-//
-//
-//        grid_view_main.adapter = WeatherAdapter(this, geoForcast)
-
     }
-
-
+    
+    // TODO Create a function that gets the weather of the current lat/long coords of the device
 
     override fun onRequestPermissionsResult(requestCode: Int,
                                             permissions: Array<out String>, grantResults: IntArray) {
