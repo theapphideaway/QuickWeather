@@ -22,6 +22,8 @@ class WeatherClass {
             .addConverterFactory(GsonConverterFactory.create())
             .client(okHttpClient)
             .build()
+
+        println(mRetrofit)
     }
 
     fun getJSONApi(): WeatherInterface {

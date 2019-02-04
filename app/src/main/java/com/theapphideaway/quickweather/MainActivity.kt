@@ -5,9 +5,6 @@ import android.content.pm.PackageManager
 import android.location.Location
 import android.location.LocationManager
 import android.os.Bundle
-import android.support.v4.app.ActivityCompat
-import android.support.v4.content.ContextCompat
-import android.support.v7.app.AppCompatActivity;
 import android.util.Log
 import android.view.KeyEvent
 import android.view.View
@@ -15,12 +12,15 @@ import android.view.View
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.content_main.*
 import android.app.ProgressDialog
+import android.support.v7.app.AppCompatActivity
+import com.google.android.gms.ads.AdRequest
+import com.google.android.gms.ads.AdView
+import com.google.android.gms.ads.MobileAds
 import com.google.android.gms.location.*
 import com.theapphideaway.quickweather.Services.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
-
 
 
 class MainActivity : AppCompatActivity() {
@@ -42,6 +42,9 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         setSupportActionBar(toolbar)
+        var mAdView = findViewById<AdView>(R.id.adView)
+        val adRequest = AdRequest.Builder().build()
+        mAdView.loadAd(adRequest)
 
         val mDialog = ProgressDialog(this)
         mDialog.setMessage("Please wait...")
@@ -64,8 +67,10 @@ class MainActivity : AppCompatActivity() {
             false
         })
 
+
+
         swipeContainer.setOnRefreshListener {
-            locationService.initLocationUpdate()
+          locationService.initLocationUpdate()
 
             swipeContainer.isRefreshing = false
         }
@@ -122,35 +127,37 @@ class MainActivity : AppCompatActivity() {
 
         else if (location != null){
             GlobalScope.launch(Dispatchers.Main) {
-                val response = weatherClass.getJSONApi().getCurrentWeather(
-                    location.latitude!!, location.longitude!!, "imperial", "c6afdab60aa89481e297e0a4f19af055"
-                ).await()
-                temperature_text_view.text = response.main.temp.toInt().toString()
+                    val response = weatherClass.getJSONApi().getCurrentWeather(
+                        location.latitude!!, location.longitude!!, "imperial", "c6afdab60aa89481e297e0a4f19af055"
+                    ).await()
 
-                city_text_view.text = response.name.toString()
-                hi_text_view.text = "HI " + response.main.temp_max.toInt().toString() + "℉"
-                low_text_view.text = "LO " + response.main.temp_min.toInt().toString() + "℉"
-                var uri = "@drawable/fog"
+                    temperature_text_view.text = response.main.temp.toInt().toString()
 
-                if (response.weather[0].description.contains("rain")) {
-                    uri = "@drawable/shower3"
-                } else if (response.weather[0].description.contains("clear")) {
-                    uri = "@drawable/sunny"
-                } else if (response.weather[0].description.contains("snow")) {
-                    uri = "@drawable/snow5"
-                } else if (response.weather[0].description.contains("cloud")) {
-                    uri = "@drawable/cloudy2"
-                }
+                    city_text_view.text = response.name.toString()
+                    hi_text_view.text = "HI " + response.main.temp_max.toInt().toString() + "℉"
+                    low_text_view.text = "LO " + response.main.temp_min.toInt().toString() + "℉"
+                    var uri = "@drawable/fog"
 
-                var imageResource = getResources().getIdentifier(uri, null, getPackageName());
+                    if (response.weather[0].description.contains("rain")) {
+                        uri = "@drawable/shower3"
+                    } else if (response.weather[0].description.contains("clear")) {
+                        uri = "@drawable/sunny"
+                    } else if (response.weather[0].description.contains("snow")) {
+                        uri = "@drawable/snow5"
+                    } else if (response.weather[0].description.contains("cloud")) {
+                        uri = "@drawable/cloudy2"
+                    }
 
-                var res = resources.getDrawable(imageResource)
-                main_weather_image.setImageDrawable(res)
+                    var imageResource = getResources().getIdentifier(uri, null, getPackageName());
 
-
-                println(response)
+                    var res = resources.getDrawable(imageResource)
+                    main_weather_image.setImageDrawable(res)
 
 
+                    println(response)
+
+//
+//
                 val forcastRespose = forcastService.getJSONApi().getCurrentForcast(
                     location.latitude!!, location.longitude!!,
                     15, "imperial", "c6afdab60aa89481e297e0a4f19af055"

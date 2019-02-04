@@ -1,6 +1,6 @@
 package com.theapphideaway.quickweather.Model.Current
 
 data class Wind(
-    val deg: Int,
+    val deg: Double,
     val speed: Double
 )
