@@ -16,4 +16,13 @@ interface ForcastInterface {
         @Query("units") units: String,
         @Query("appid") apiKey: String
     ) : Deferred<ForcastResponse>
+
+    @GET("forecast/daily")
+    fun getCurrentForcast(
+        @Query("lat") lat: Double,
+        @Query("lon") lon: Double,
+        @Query("cnt") count: Int,
+        @Query("units") degreeType: String,
+        @Query("appid") apiKey: String
+    ): Deferred<ForcastResponse>
 }

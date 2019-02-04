@@ -12,20 +12,6 @@ class WeatherClass {
     private var mRetrofit: Retrofit? = null
 
     init {
-//        val requestInterceptor = Interceptor{chain ->
-//
-//            val url = chain.request()
-//                .url()
-//                .newBuilder()
-//                .addQueryParameter("appid", API_KEY)
-//                .build()
-//            val request = chain.request()
-//                .newBuilder()
-//                .url(url)
-//                .build()
-//
-//            return@Interceptor chain.proceed(request)
-//        }
 
         val okHttpClient = OkHttpClient.Builder()
             .build()

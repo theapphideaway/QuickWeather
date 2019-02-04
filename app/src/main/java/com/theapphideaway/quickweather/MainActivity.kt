@@ -79,10 +79,8 @@ class MainActivity : AppCompatActivity() {
     fun getCurrentDetails(location: Location?, city:String?){
 
         if(city != null) {
-
-
             GlobalScope.launch(Dispatchers.Main) {
-                val response = weatherClass.getJSONApi().getCurrentWeather(
+                val response = weatherClass.getJSONApi().getCityWeather(
                     city!!,
                     "imperial", "c6afdab60aa89481e297e0a4f19af055"
                 ).await()
@@ -121,8 +119,49 @@ class MainActivity : AppCompatActivity() {
                 grid_view_main.adapter = WeatherAdapter(this@MainActivity, forcastRespose)
             }
         }
+
+        else if (location != null){
+            GlobalScope.launch(Dispatchers.Main) {
+                val response = weatherClass.getJSONApi().getCurrentWeather(
+                    location.latitude!!, location.longitude!!, "imperial", "c6afdab60aa89481e297e0a4f19af055"
+                ).await()
+                temperature_text_view.text = response.main.temp.toInt().toString()
+
+                city_text_view.text = response.name.toString()
+                hi_text_view.text = "HI " + response.main.temp_max.toInt().toString() + "℉"
+                low_text_view.text = "LO " + response.main.temp_min.toInt().toString() + "℉"
+                var uri = "@drawable/fog"
+
+                if (response.weather[0].description.contains("rain")) {
+                    uri = "@drawable/shower3"
+                } else if (response.weather[0].description.contains("clear")) {
+                    uri = "@drawable/sunny"
+                } else if (response.weather[0].description.contains("snow")) {
+                    uri = "@drawable/snow5"
+                } else if (response.weather[0].description.contains("cloud")) {
+                    uri = "@drawable/cloudy2"
+                }
+
+                var imageResource = getResources().getIdentifier(uri, null, getPackageName());
+
+                var res = resources.getDrawable(imageResource)
+                main_weather_image.setImageDrawable(res)
+
+
+                println(response)
+
+
+                val forcastRespose = forcastService.getJSONApi().getCurrentForcast(
+                    location.latitude!!, location.longitude!!,
+                    15, "imperial", "c6afdab60aa89481e297e0a4f19af055"
+                ).await()
+
+                println(forcastRespose)
+                grid_view_main.adapter = WeatherAdapter(this@MainActivity, forcastRespose)
+            }
+        }
     }
-    
+
     // TODO Create a function that gets the weather of the current lat/long coords of the device
 
     override fun onRequestPermissionsResult(requestCode: Int,
